@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# Configuración inicial de la página
+# Configuración inicial
 st.set_page_config(layout="wide", page_title="Sorteador CN")
 
 # === Función para estilos y fondo ===
@@ -18,7 +18,7 @@ def set_background(image_url):
         font-family: 'DIN', sans-serif;
     }}
 
-    /* Contenedor principal */
+    /* Contenedor */
     .main .block-container {{
         padding-top: 0rem !important;
         padding-left: 2rem;
@@ -33,35 +33,42 @@ def set_background(image_url):
         height: 0px;
     }}
 
-    /* Colores de texto */
+    /* Textos */
     h1, h2, h3, h4, h5, h6 {{
         color: white !important;
         text-shadow: 2px 2px 5px black !important;
     }}
-
     p, span, div {{
         color: white !important;
         text-shadow: 1px 1px 3px black;
     }}
 
-    /* DataFrame: texto negro sobre fondo blanco */
+    /* DataFrame */
     .stDataFrame table, .stDataFrame th, .stDataFrame td {{
         color: black !important;
         background-color: white !important;
     }}
 
-    /* --- Sidebar Fix: botón hamburguesa --- */
+    /* --- Sidebar Toggle visible --- */
     [data-testid="stSidebarToggleButton"] {{
         position: fixed !important;
         top: 15px !important;
         left: 15px !important;
         z-index: 99999 !important;
-        background-color: rgba(0,0,0,0.6) !important;
+        background-color: rgba(0,0,0,0.7) !important;
+        border: 1px solid white !important;
         border-radius: 6px !important;
         color: white !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }}
+    [data-testid="stSidebarToggleButton"]:hover {{
+        background-color: rgba(255,255,255,0.8) !important;
+        color: black !important;
     }}
 
-    /* --- Sidebar Fix --- */
+    /* --- Sidebar --- */
     section[data-testid="stSidebar"] {{
         background-color: rgba(0, 0, 0, 0.95) !important;
         color: white !important;
@@ -70,17 +77,41 @@ def set_background(image_url):
     [data-testid="stSidebar"] * {{
         color: white !important;
     }}
-    [data-testid="stSidebarUserContent"] {{
-        position: relative;
-        z-index: 10000;
-    }}
 
-    /* Uploader claro */
-    .stFileUploader label, .stFileUploader div {{
+    /* Botón Sortear Premio con brillo */
+    div.stButton > button:first-child {{
+        background: linear-gradient(90deg, #444, #777, #444);
         color: white !important;
+        font-weight: bold;
+        border: 2px solid #fff;
+        border-radius: 10px;
+        padding: 0.6em 1.5em;
+        font-size: 1.1em;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }}
+    div.stButton > button:first-child::before {{
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.6), transparent);
+        transition: all 0.6s;
+    }}
+    div.stButton > button:first-child:hover::before {{
+        left: 100%;
+    }}
+    div.stButton > button:first-child:hover {{
+        background: linear-gradient(90deg, #666, #999, #666);
+        box-shadow: 0 0 20px rgba(255,255,255,0.5);
     }}
 
-    /* Premio en blanco y visible */
+    /* Texto de premio visible */
     .premio-visible {{
         font-size: 22px;
         font-weight: bold;
@@ -92,10 +123,11 @@ def set_background(image_url):
     st.markdown(css, unsafe_allow_html=True)
 
 
-# === Fondo e imagen del logo ===
+# === Fondo ===
 image_url = "https://i.imgur.com/KkSUL4Z.jpg"
 set_background(image_url)
 
+# === Logo ===
 logo_url = "https://i.imgur.com/wxJTNMK.png"
 st.markdown(
     f"""
@@ -107,7 +139,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# === Título principal ===
+# === Título ===
 st.title("SORTEO Fiesta Fin de Año 🎁")
 
 # === Sidebar ===
@@ -130,7 +162,7 @@ if "premios_disponibles" not in st.session_state:
     st.session_state.premios_disponibles = None
 
 
-# === Lógica de carga ===
+# === Lógica principal ===
 if personas_file and premios_file:
     try:
         if st.session_state.personas is None:
