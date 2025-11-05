@@ -85,15 +85,7 @@ def set_background(image_url):
         margin: 10px 0 40px 0;
     }}
 
-    /* Efecto de brillo */
-    @keyframes shine {{
-        0% {{ text-shadow: 0 0 10px #fff, 0 0 20px #ffd700, 0 0 30px #ff8c00; }}
-        50% {{ text-shadow: 0 0 20px #fff, 0 0 40px #ffd700, 0 0 60px #ff8c00; }}
-        100% {{ text-shadow: 0 0 10px #fff, 0 0 20px #ffd700, 0 0 30px #ff8c00; }}
-    }}
-    .shine {{
-        animation: shine 1.5s infinite alternate;
-    }}
+
 
     /* Texto grande lado derecho */
     .ganador-nombre {{
@@ -184,7 +176,7 @@ else:
         else:
             st.warning("No hay premios disponibles.")
 
-        if st.button("🎯 Sortear Premio", use_container_width=True):
+        if st.button("Sortear Premio", use_container_width=True):
             if not st.session_state.personas.empty and st.session_state.premios_disponibles:
                 ganador = st.session_state.personas.sample(n=1)
                 ganador_id = ganador["ID"].values[0]
@@ -208,11 +200,11 @@ else:
                 st.warning("No hay más participantes o premios.")
 
         if st.session_state.resultados:
-            st.subheader("📜 Resultados del sorteo")
+            st.subheader("Resultados del sorteo")
             resultados_df = pd.DataFrame(st.session_state.resultados)
             st.dataframe(resultados_df, use_container_width=True)
             st.download_button(
-                label="⬇️ Descargar Resultados",
+                label="Descargar Resultados",
                 data=resultados_df.to_csv(index=False),
                 file_name="resultados_sorteo.csv",
                 mime="text/csv",
