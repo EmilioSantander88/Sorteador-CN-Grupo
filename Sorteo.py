@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-# Configuración inicial
 st.set_page_config(layout="wide", page_title="Sorteador CN")
 
 # === Función para estilos y fondo ===
@@ -20,14 +19,12 @@ def set_background(image_url):
 
     /* Contenedor */
     .main .block-container {{
-        padding-top: 0rem !important;
+        padding-top: 1rem !important;
         padding-left: 2rem;
         padding-right: 2rem;
         padding-bottom: 5rem;
     }}
-    [data-testid="stAppViewBlockContainer"] {{
-        padding-top: 0rem !important;
-    }}
+
     header {{
         visibility: hidden;
         height: 0px;
@@ -47,35 +44,6 @@ def set_background(image_url):
     .stDataFrame table, .stDataFrame th, .stDataFrame td {{
         color: black !important;
         background-color: white !important;
-    }}
-
-    /* --- Sidebar Toggle visible --- */
-    [data-testid="stSidebarToggleButton"] {{
-        position: fixed !important;
-        top: 15px !important;
-        left: 15px !important;
-        z-index: 99999 !important;
-        background-color: rgba(0,0,0,0.7) !important;
-        border: 1px solid white !important;
-        border-radius: 6px !important;
-        color: white !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }}
-    [data-testid="stSidebarToggleButton"]:hover {{
-        background-color: rgba(255,255,255,0.8) !important;
-        color: black !important;
-    }}
-
-    /* --- Sidebar --- */
-    section[data-testid="stSidebar"] {{
-        background-color: rgba(0, 0, 0, 0.95) !important;
-        color: white !important;
-        z-index: 9999 !important;
-    }}
-    [data-testid="stSidebar"] * {{
-        color: white !important;
     }}
 
     /* Botón Sortear Premio con brillo */
@@ -111,7 +79,6 @@ def set_background(image_url):
         box-shadow: 0 0 20px rgba(255,255,255,0.5);
     }}
 
-    /* Texto de premio visible */
     .premio-visible {{
         font-size: 22px;
         font-weight: bold;
@@ -131,7 +98,7 @@ set_background(image_url)
 logo_url = "https://i.imgur.com/wxJTNMK.png"
 st.markdown(
     f"""
-    <div style="text-align: center; margin-bottom: 50px;">
+    <div style="text-align: center; margin-bottom: 30px;">
         <img src="{logo_url}" alt="Logo" style="width: 150px; margin: 20px auto;">
         <hr style="border: 1px solid #ccc;">
     </div>
@@ -142,10 +109,14 @@ st.markdown(
 # === Título ===
 st.title("SORTEO Fiesta Fin de Año 🎁")
 
-# === Sidebar ===
-st.sidebar.header("Carga de Datos")
-personas_file = st.sidebar.file_uploader("Sube el archivo de personas (CSV)", type=["csv"])
-premios_file = st.sidebar.file_uploader("Sube el archivo de premios (CSV)", type=["csv"])
+# === Sección de carga ===
+st.markdown("### 📂 Cargar archivos para el sorteo")
+
+col_upload1, col_upload2 = st.columns(2)
+with col_upload1:
+    personas_file = st.file_uploader("Sube el archivo de personas (CSV)", type=["csv"])
+with col_upload2:
+    premios_file = st.file_uploader("Sube el archivo de premios (CSV)", type=["csv"])
 
 # === Estados ===
 if "personas" not in st.session_state:
