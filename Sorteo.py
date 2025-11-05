@@ -8,8 +8,9 @@ st.set_page_config(layout="wide", page_title="Sorteador de Premios Manual 🎁")
 def set_background(image_url):
     css = f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=DIN&display=swap');
+    @import url('https://fonts.com/css2?family=DIN&display=swap');
 
+    /* Contenedor principal de la aplicación */
     .stApp {{
         background-image: url("{image_url}");
         background-size: cover;
@@ -18,7 +19,7 @@ def set_background(image_url):
         font-family: 'DIN', sans-serif;
     }}
 
-    /* === 1. ARREGLO MARGEN SUPERIOR === */
+    /* === 1. ARREGLO MARGEN SUPERIOR Y PADDING === */
     .main .block-container {{
         padding-top: 0rem !important;
         padding-left: 2rem;
@@ -33,34 +34,51 @@ def set_background(image_url):
         height: 0px;
     }}
 
-    /* === 2. ARREGLO COLOR DEL TÍTULO === */
-    /* Forzar color blanco y sombra al elemento H1 que Streamlit usa para st.title */
+    /* === 2. ARREGLO COLOR DEL TEXTO (Títulos, Subtítulos y Texto Normal) === */
+    /* Forzar color blanco y sombra al elemento H1 (st.title) */
     h1 {{
         color: white !important;
         text-shadow: 2px 2px 5px black !important;
         text-align: center;
         margin-top: 1rem;
     }}
+    
+    /* Forzar color blanco a H2 y H3 (st.header, st.subheader) */
+    h2, h3 {{
+        color: white !important;
+        text-shadow: 1px 1px 3px black;
+    }}
+
+    /* Forzar color blanco para texto normal (st.write) */
+    .st-emotion-cache-1jm69f1, .st-emotion-cache-1jm69f1 p, .st-emotion-cache-1jm69f1 span {{ /* Selectores que contienen st.write */
+        color: white !important;
+        text-shadow: 1px 1px 2px black;
+    }}
 
     /* === 3. ARREGLO BARRA LATERAL (SIDEBAR) Y BOTÓN DE MENÚ === */
-    /* Asegurar que el botón de hamburguesa (☰) sea visible y contraste */
+    /* Estilo del botón de hamburguesa (☰) */
     [data-testid="stSidebarToggleButton"] {{
         color: white !important; /* Color blanco para el icono de menú */
         background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente para mejor contraste */
         border-radius: 5px;
-        top: 10px; /* Posición más baja si es necesario */
+        top: 10px; 
+        z-index: 1000; /* Asegura que esté por encima de otros elementos */
     }}
     
-    /* Estilo de la barra lateral en sí */
+    /* Estilo de la barra lateral en sí (color sólido para resolver problemas de clic/interacción) */
     section[data-testid="stSidebar"] {{
-        background-color: rgba(0, 0, 0, 0.7) !important; /* Fondo oscuro y semitransparente */
+        background-color: rgba(0, 0, 0, 0.95) !important; /* Fondo casi negro sólido */
         color: white; 
     }}
+    
+    /* Asegurar que el texto dentro de la sidebar sea blanco */
+    [data-testid="stSidebar"] * {{
+        color: white !important;
+    }}
 
-    /* Estilo general del texto */
-    html, body, [class*="css"] {{
-        font-family: 'DIN', sans-serif;
-        color: white; /* Asegura que el texto general también sea blanco si es necesario */
+    /* Ajuste para el file uploader, para que se vea claro en el fondo oscuro */
+    .stFileUploader label, .stFileUploader div {{
+        color: white !important;
     }}
 
     </style>
@@ -126,7 +144,8 @@ if personas_file and premios_file:
         # Mostrar el siguiente premio de forma secuencial
         if st.session_state.premios_disponibles:
             premio_seleccionado = st.session_state.premios_disponibles[0]
-            st.write(premio_seleccionado)
+            # st.write(premio_seleccionado) se renderiza ahora blanco por el CSS general
+            st.write(premio_seleccionado) 
         else:
             st.warning("No hay premios disponibles.")
 
