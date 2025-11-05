@@ -72,7 +72,7 @@ def set_background(image_url):
 
     /* Premio */
     .premio-visible {{
-        font-size: 24px;
+        font-size: 26px;
         font-weight: bold;
         color: #fff !important;
         text-shadow: 2px 2px 5px black;
@@ -93,6 +93,25 @@ def set_background(image_url):
     }}
     .shine {{
         animation: shine 1.5s infinite alternate;
+    }}
+
+    /* Texto grande lado derecho */
+    .ganador-nombre {{
+        font-size: 100px;
+        font-weight: bold;
+        color: #fff;
+        text-shadow: 3px 3px 8px black;
+    }}
+    .ganador-premio {{
+        font-size: 60px;
+        font-weight: bold;
+        color: #f7e9b0;
+        text-shadow: 2px 2px 5px black;
+    }}
+    .ganador-titulo {{
+        font-size: 45px;
+        margin-bottom: 20px;
+        color: white;
     }}
     </style>
     """
@@ -154,7 +173,8 @@ if st.session_state.personas is None or st.session_state.premios is None:
             st.error(f"Error al leer los archivos: {e}")
 
 else:
-    col1, col2 = st.columns([1, 2])
+    # columnas ajustadas: izquierda más angosta, derecha más ancha
+    col1, col2 = st.columns([0.8, 2.2])
 
     with col1:
         st.subheader("El siguiente premio es:")
@@ -164,7 +184,7 @@ else:
         else:
             st.warning("No hay premios disponibles.")
 
-        if st.button("Sortear Premio", use_container_width=True):
+        if st.button("🎯 Sortear Premio", use_container_width=True):
             if not st.session_state.personas.empty and st.session_state.premios_disponibles:
                 ganador = st.session_state.personas.sample(n=1)
                 ganador_id = ganador["ID"].values[0]
@@ -188,11 +208,11 @@ else:
                 st.warning("No hay más participantes o premios.")
 
         if st.session_state.resultados:
-            st.subheader("Resultados del sorteo")
+            st.subheader("📜 Resultados del sorteo")
             resultados_df = pd.DataFrame(st.session_state.resultados)
             st.dataframe(resultados_df, use_container_width=True)
             st.download_button(
-                label="Descargar Resultados",
+                label="⬇️ Descargar Resultados",
                 data=resultados_df.to_csv(index=False),
                 file_name="resultados_sorteo.csv",
                 mime="text/csv",
@@ -203,10 +223,10 @@ else:
         if st.session_state.ultimo_ganador:
             st.markdown(
                 f"""
-                <div style="text-align:center; margin-top:50px;">
-                    <h2>EL GANADOR ES...</h2>
-                    <h1 class="shine" style="font-size:80px;">{st.session_state.ultimo_ganador}</h1>
-                    <h2 style="font-size:50px;">{st.session_state.ultimo_premio}</h2>
+                <div style="text-align:center; margin-top:30px;">
+                    <h2 class="ganador-titulo">EL GANADOR ES...</h2>
+                    <div class="ganador-nombre shine">{st.session_state.ultimo_ganador}</div>
+                    <div class="ganador-premio">{st.session_state.ultimo_premio}</div>
                     <h3 style="font-size:40px; color:#f7e9b0;">¡FELICITACIONES! 🎉</h3>
                 </div>
                 """,
@@ -215,7 +235,7 @@ else:
         else:
             st.markdown(
                 """
-                <div style="text-align:center; margin-top:80px;">
+                <div style="text-align:center; margin-top:100px;">
                     <h2 style="color:gray;">Esperando el primer sorteo...</h2>
                 </div>
                 """,
