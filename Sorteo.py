@@ -18,38 +18,51 @@ def set_background(image_url):
         font-family: 'DIN', sans-serif;
     }}
 
-    /* Eliminación agresiva del margen y padding superior */
+    /* === 1. ARREGLO MARGEN SUPERIOR === */
     .main .block-container {{
-        /* Asegura que el contenido empiece inmediatamente */
         padding-top: 0rem !important;
         padding-left: 2rem;
         padding-right: 2rem;
         padding-bottom: 5rem;
     }}
-    
-    /* Elimina el padding del contenedor principal de la aplicación */
     [data-testid="stAppViewBlockContainer"] {{
         padding-top: 0rem !important;
     }}
-    
-    /* Oculta la cabecera predeterminada de Streamlit (donde a veces reside el espacio) */
     header {{
         visibility: hidden;
         height: 0px;
     }}
 
+    /* === 2. ARREGLO COLOR DEL TÍTULO === */
+    /* Forzar color blanco y sombra al elemento H1 que Streamlit usa para st.title */
+    h1 {{
+        color: white !important;
+        text-shadow: 2px 2px 5px black !important;
+        text-align: center;
+        margin-top: 1rem;
+    }}
+
+    /* === 3. ARREGLO BARRA LATERAL (SIDEBAR) Y BOTÓN DE MENÚ === */
+    /* Asegurar que el botón de hamburguesa (☰) sea visible y contraste */
+    [data-testid="stSidebarToggleButton"] {{
+        color: white !important; /* Color blanco para el icono de menú */
+        background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente para mejor contraste */
+        border-radius: 5px;
+        top: 10px; /* Posición más baja si es necesario */
+    }}
+    
+    /* Estilo de la barra lateral en sí */
+    section[data-testid="stSidebar"] {{
+        background-color: rgba(0, 0, 0, 0.7) !important; /* Fondo oscuro y semitransparente */
+        color: white; 
+    }}
+
     /* Estilo general del texto */
     html, body, [class*="css"] {{
         font-family: 'DIN', sans-serif;
+        color: white; /* Asegura que el texto general también sea blanco si es necesario */
     }}
 
-    /* Personalización del título */
-    .stTitle {{
-        color: white;
-        text-shadow: 2px 2px 5px black;
-        text-align: center;
-        margin-top: 1rem; /* Pequeño margen superior para que no se pegue al borde */
-    }}
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
@@ -58,7 +71,7 @@ def set_background(image_url):
 image_url = "https://i.imgur.com/KkSUL4Z.jpg"  # Enlace directo a la imagen
 set_background(image_url)
 
-# Agregar el logo de la empresa centrado entre líneas
+# Agregar el logo de la empresa centrado. Ahora solo con una línea inferior.
 logo_url = "https://i.imgur.com/wxJTNMK.png"  # URL directa de la imagen PNG
 st.markdown(
     f"""
