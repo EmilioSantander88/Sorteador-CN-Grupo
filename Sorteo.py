@@ -78,6 +78,11 @@ def set_background(image_url):
         color: white; 
         z-index: 9999 !important; /* Z-index alto para la barra lateral en sí */
     }}
+
+    /* SOLUCIÓN AL PROBLEMA DE MINIMIZAR/MAXIMIZAR EN DEPLOY */
+    [data-testid="stSidebarUserContent"] {{
+        position: relative; /* Asegura que el contenido del sidebar respete el z-index */
+    }}
     
     /* Asegurar que el texto dentro de la sidebar sea blanco */
     [data-testid="stSidebar"] * {{
