@@ -38,7 +38,31 @@ def set_background(image_url):
         background-color: white !important;
     }}
 
-    /* Botones grandes */
+    /* Botones principales */
+    button[kind="primary"], div.stButton > button {{
+        background-color: rgba(0,0,0,0.7) !important;
+        color: #f7e9b0 !important;
+        border: 2px solid #f7e9b0 !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        transition: all 0.3s ease-in-out;
+    }}
+
+    button[kind="primary"]:hover, div.stButton > button:hover {{
+        background-color: #f7e9b0 !important;
+        color: black !important;
+        border: 2px solid #f7e9b0 !important;
+        transform: scale(1.03);
+    }}
+
+    /* Botón de descarga */
+    div[data-testid="stDownloadButton"] > button {{
+        background-color: rgba(0,0,0,0.6) !important;
+        color: white !important;
+        border: 1px solid #ccc !important;
+    }}
+
+    /* Subtítulos de carga */
     div[data-testid="stFileUploader"] {{
         background-color: rgba(0, 0, 0, 0.6);
         border-radius: 10px;
@@ -46,6 +70,7 @@ def set_background(image_url):
         text-align: center;
     }}
 
+    /* Premio */
     .premio-visible {{
         font-size: 24px;
         font-weight: bold;
@@ -53,7 +78,14 @@ def set_background(image_url):
         text-shadow: 2px 2px 5px black;
     }}
 
-    /* Efecto de brillo en el ganador */
+    /* Línea decorativa bajo el logo */
+    .custom-line {{
+        border-top: 1px solid #ccc;
+        width: 100%;
+        margin: 10px 0 40px 0;
+    }}
+
+    /* Efecto de brillo */
     @keyframes shine {{
         0% {{ text-shadow: 0 0 10px #fff, 0 0 20px #ffd700, 0 0 30px #ff8c00; }}
         50% {{ text-shadow: 0 0 20px #fff, 0 0 40px #ffd700, 0 0 60px #ff8c00; }}
@@ -73,9 +105,9 @@ set_background("https://i.imgur.com/KkSUL4Z.jpg")
 logo_url = "https://i.imgur.com/wxJTNMK.png"
 st.markdown(
     f"""
-    <div style="text-align: center; margin-bottom: 30px;">
+    <div style="text-align: center; margin-bottom: 10px;">
         <img src="{logo_url}" alt="Logo" style="width: 150px; margin: 20px auto;">
-        <hr style="border: 1px solid #ccc; width: 60%;">
+        <div class="custom-line"></div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -102,7 +134,6 @@ if "premios_disponibles" not in st.session_state:
 # ==========================
 st.title("🎁 Sorteo Fiesta Fin de Año CN")
 
-# Mostrar carga solo si aún no hay datos
 if st.session_state.personas is None or st.session_state.premios is None:
     st.markdown("<h3 style='text-align:center;'>Cargá los archivos CSV para comenzar</h3>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
@@ -123,9 +154,6 @@ if st.session_state.personas is None or st.session_state.premios is None:
             st.error(f"Error al leer los archivos: {e}")
 
 else:
-    # ==========================
-    # BLOQUE PRINCIPAL DE SORTEO
-    # ==========================
     col1, col2 = st.columns([1, 2])
 
     with col1:
@@ -136,7 +164,7 @@ else:
         else:
             st.warning("No hay premios disponibles.")
 
-        if st.button("🎯 Sortear Premio", use_container_width=True):
+        if st.button("Sortear Premio", use_container_width=True):
             if not st.session_state.personas.empty and st.session_state.premios_disponibles:
                 ganador = st.session_state.personas.sample(n=1)
                 ganador_id = ganador["ID"].values[0]
@@ -146,10 +174,7 @@ else:
                 st.session_state.ultimo_ganador = ganador_nombre
                 st.session_state.ultimo_premio = premio
 
-                st.session_state.resultados.append(
-                    {"Ganador": ganador_nombre, "Premio": premio}
-                )
-
+                st.session_state.resultados.append({"Ganador": ganador_nombre, "Premio": premio})
                 st.session_state.personas = st.session_state.personas[
                     st.session_state.personas["ID"] != ganador_id
                 ]
@@ -163,11 +188,11 @@ else:
                 st.warning("No hay más participantes o premios.")
 
         if st.session_state.resultados:
-            st.subheader("📜 Resultados del sorteo")
+            st.subheader("Resultados del sorteo")
             resultados_df = pd.DataFrame(st.session_state.resultados)
             st.dataframe(resultados_df, use_container_width=True)
             st.download_button(
-                label="⬇️ Descargar Resultados",
+                label="Descargar Resultados",
                 data=resultados_df.to_csv(index=False),
                 file_name="resultados_sorteo.csv",
                 mime="text/csv",
