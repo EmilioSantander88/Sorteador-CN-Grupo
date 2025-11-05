@@ -8,7 +8,7 @@ st.set_page_config(layout="wide", page_title="Sorteador de Premios Manual 🎁")
 def set_background(image_url):
     css = f"""
     <style>
-    @import url('https://fonts.com/css2?family=DIN&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=DIN&display=swap');
 
     /* Contenedor principal de la aplicación */
     .stApp {{
@@ -21,7 +21,8 @@ def set_background(image_url):
 
     /* === 1. ARREGLO MARGEN SUPERIOR Y PADDING === */
     .main .block-container {{
-        padding-top: 0rem !important;
+        /* Eliminación agresiva del padding superior para empezar desde arriba */
+        padding-top: 0rem !important; 
         padding-left: 2rem;
         padding-right: 2rem;
         padding-bottom: 5rem;
@@ -54,21 +55,28 @@ def set_background(image_url):
         color: white !important;
         text-shadow: 1px 1px 2px black;
     }}
+    
+    /* Forzar color blanco para la tabla de resultados */
+    .stDataFrame table, .stDataFrame th, .stDataFrame td {{
+        color: black !important; /* El DataFrame tiene fondo claro por defecto, el texto debe ser oscuro */
+        background-color: white !important;
+    }}
 
-    /* === 3. ARREGLO BARRA LATERAL (SIDEBAR) Y BOTÓN DE MENÚ === */
+    /* === 3. SOLUCIÓN Z-INDEX PARA SIDEBAR Y BOTÓN DE MENÚ (Esto debe arreglar el problema de interacción) === */
     /* Estilo del botón de hamburguesa (☰) */
     [data-testid="stSidebarToggleButton"] {{
-        color: white !important; /* Color blanco para el icono de menú */
-        background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente para mejor contraste */
+        color: white !important; 
+        background-color: rgba(0, 0, 0, 0.5); 
         border-radius: 5px;
         top: 10px; 
-        z-index: 1000; /* Asegura que esté por encima de otros elementos */
+        z-index: 99999 !important; /* Z-index extremadamente alto para asegurarse de que sea clicable */
     }}
     
     /* Estilo de la barra lateral en sí (color sólido para resolver problemas de clic/interacción) */
     section[data-testid="stSidebar"] {{
         background-color: rgba(0, 0, 0, 0.95) !important; /* Fondo casi negro sólido */
         color: white; 
+        z-index: 9999 !important; /* Z-index alto para la barra lateral en sí */
     }}
     
     /* Asegurar que el texto dentro de la sidebar sea blanco */
@@ -125,75 +133,87 @@ if "premios_disponibles" not in st.session_state:
 
 # Cargar los datos subidos si no están cargados aún
 if personas_file and premios_file:
-    if st.session_state.personas is None:
-        st.session_state.personas = pd.read_csv(personas_file)
-    if st.session_state.premios is None:
-        st.session_state.premios = pd.read_csv(premios_file)
+    # Intenta leer el archivo
+    try:
+        if st.session_state.personas is None:
+            st.session_state.personas = pd.read_csv(personas_file)
+        if st.session_state.premios is None:
+            st.session_state.premios = pd.read_csv(premios_file)
 
-    # Crear una copia de los premios disponibles para el sorteo
-    if st.session_state.premios_disponibles is None:
-        st.session_state.premios_disponibles = st.session_state.premios["Nombre Premio"].tolist()
+        # Crear una copia de los premios disponibles para el sorteo
+        if st.session_state.premios_disponibles is None:
+            st.session_state.premios_disponibles = st.session_state.premios["Nombre Premio"].tolist()
+        
+        # Continuar si la carga fue exitosa
+        # Dividir la pantalla en dos columnas
+        col1, col2 = st.columns([1, 2])  # Ajustar proporción: izquierda más estrecha, derecha más grande
 
-    # Dividir la pantalla en dos columnas
-    col1, col2 = st.columns([1, 2])  # Ajustar proporción: izquierda más estrecha, derecha más grande
+        # Contenido en la columna izquierda: el sorteador
+        with col1:
+            st.subheader("El siguiente premio es")
 
-    # Contenido en la columna izquierda: el sorteador
-    with col1:
-        st.subheader("El siguiente premio es")
+            # Mostrar el siguiente premio de forma secuencial
+            if st.session_state.premios_disponibles:
+                premio_seleccionado = st.session_state.premios_disponibles[0]
+                st.write(premio_seleccionado) 
+            else:
+                st.warning("No hay premios disponibles.")
 
-        # Mostrar el siguiente premio de forma secuencial
-        if st.session_state.premios_disponibles:
-            premio_seleccionado = st.session_state.premios_disponibles[0]
-            # st.write(premio_seleccionado) se renderiza ahora blanco por el CSS general
-            st.write(premio_seleccionado) 
-        else:
-            st.warning("No hay premios disponibles.")
+            # Botón para realizar el sorteo
+            if st.button("Sortear Premio"):
+                if not st.session_state.personas.empty and st.session_state.premios_disponibles:
+                    # Sorteo: Elegir un ganador aleatorio
+                    ganador = st.session_state.personas.sample(n=1)
+                    ganador_id = ganador["ID"].values[0]
+                    ganador_nombre = ganador["Nombre"].values[0]
 
-        # Botón para realizar el sorteo
-        if st.button("Sortear Premio"):
-            if not st.session_state.personas.empty and st.session_state.premios_disponibles:
-                # Sorteo: Elegir un ganador aleatorio
-                ganador = st.session_state.personas.sample(n=1)
-                ganador_id = ganador["ID"].values[0]
-                ganador_nombre = ganador["Nombre"].values[0]
+                    # Guardar el último ganador y premio para mostrar
+                    st.session_state.ultimo_ganador = ganador_nombre
+                    st.session_state.ultimo_premio = premio_seleccionado
 
-                # Guardar el último ganador y premio para mostrar
-                st.session_state.ultimo_ganador = ganador_nombre
-                st.session_state.ultimo_premio = premio_seleccionado
+                    # Registrar el resultado
+                    st.session_state.resultados.append(
+                        {"Ganador": ganador_nombre, "Premio": premio_seleccionado}
+                    )
 
-                # Registrar el resultado
-                st.session_state.resultados.append(
-                    {"Ganador": ganador_nombre, "Premio": premio_seleccionado}
+                    # Eliminar al ganador
+                    st.session_state.personas = st.session_state.personas[st.session_state.personas["ID"] != ganador_id]
+
+                    # Eliminar el premio seleccionado de la lista de premios disponibles
+                    st.session_state.premios_disponibles.pop(0)
+
+                    # Verificar si quedan premios
+                    if not st.session_state.premios_disponibles:
+                        st.balloons() # Pequeña celebración al terminar los premios
+                        st.success(f"🎉 {ganador_nombre} ganó el premio: {premio_seleccionado}. ¡Sorteo finalizado!")
+                    else:
+                        st.success(f"🎉 {ganador_nombre} ganó el premio: {premio_seleccionado}")
+
+                else:
+                    st.warning("No hay más participantes o premios disponibles.")
+
+            # Mostrar la tabla de resultados
+            if st.session_state.resultados:
+                st.subheader("Resultados del Sorteo")
+                resultados_df = pd.DataFrame(st.session_state.resultados)
+                # Aplicar estilo al DataFrame para que sea legible
+                st.dataframe(
+                    resultados_df, 
+                    use_container_width=True,
                 )
 
-                # Eliminar al ganador
-                st.session_state.personas = st.session_state.personas[st.session_state.personas["ID"] != ganador_id]
+                # Botón para descargar los resultados
+                st.download_button(
+                    label="Descargar Resultados",
+                    data=resultados_df.to_csv(index=False),
+                    file_name="resultados_sorteo.csv",
+                    mime="text/csv",
+                )
+    except Exception as e:
+        st.error(f"Error al cargar los archivos. Asegúrate de que sean archivos CSV válidos y con las columnas correctas ('ID', 'Nombre' y 'Nombre Premio'). Error: {e}")
+        st.session_state.personas = None
+        st.session_state.premios = None
 
-                # Eliminar el premio seleccionado de la lista de premios disponibles
-                st.session_state.premios_disponibles.pop(0)
-
-                # Verificar si quedan premios
-                if not st.session_state.premios_disponibles:
-                    st.warning("No hay más premios disponibles.")
-                else:
-                    st.success(f"🎉 {ganador_nombre} ganó el premio: {premio_seleccionado}")
-
-            else:
-                st.warning("No hay más participantes o premios disponibles.")
-
-        # Mostrar la tabla de resultados
-        if st.session_state.resultados:
-            st.subheader("Resultados del Sorteo")
-            resultados_df = pd.DataFrame(st.session_state.resultados)
-            st.dataframe(resultados_df)
-
-            # Botón para descargar los resultados
-            st.download_button(
-                label="Descargar Resultados",
-                data=resultados_df.to_csv(index=False),
-                file_name="resultados_sorteo.csv",
-                mime="text/csv",
-            )
 
 # Contenido en la columna derecha: mostrar al ganador y el premio
     with col2:
