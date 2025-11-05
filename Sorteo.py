@@ -1,9 +1,12 @@
 import streamlit as st
 import pandas as pd
 
+# ==========================
+# CONFIGURACIÓN INICIAL
+# ==========================
 st.set_page_config(layout="wide", page_title="Sorteador CN")
 
-# === Función para estilos y fondo ===
+# === Fondo y estilo ===
 def set_background(image_url):
     css = f"""
     <style>
@@ -17,24 +20,13 @@ def set_background(image_url):
         font-family: 'DIN', sans-serif;
     }}
 
-    /* Contenedor */
-    .main .block-container {{
-        padding-top: 1rem !important;
-        padding-left: 2rem;
-        padding-right: 2rem;
-        padding-bottom: 5rem;
-    }}
+    header {{visibility: hidden; height: 0px;}}
 
-    header {{
-        visibility: hidden;
-        height: 0px;
-    }}
-
-    /* Textos */
     h1, h2, h3, h4, h5, h6 {{
         color: white !important;
         text-shadow: 2px 2px 5px black !important;
     }}
+
     p, span, div {{
         color: white !important;
         text-shadow: 1px 1px 3px black;
@@ -46,53 +38,36 @@ def set_background(image_url):
         background-color: white !important;
     }}
 
-    /* Botón Sortear Premio con brillo */
-    div.stButton > button:first-child {{
-        background: linear-gradient(90deg, #444, #777, #444);
-        color: white !important;
-        font-weight: bold;
-        border: 2px solid #fff;
+    /* Botones grandes */
+    div[data-testid="stFileUploader"] {{
+        background-color: rgba(0, 0, 0, 0.6);
         border-radius: 10px;
-        padding: 0.6em 1.5em;
-        font-size: 1.1em;
-        cursor: pointer;
-        box-shadow: 0 0 10px rgba(255,255,255,0.3);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }}
-    div.stButton > button:first-child::before {{
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.6), transparent);
-        transition: all 0.6s;
-    }}
-    div.stButton > button:first-child:hover::before {{
-        left: 100%;
-    }}
-    div.stButton > button:first-child:hover {{
-        background: linear-gradient(90deg, #666, #999, #666);
-        box-shadow: 0 0 20px rgba(255,255,255,0.5);
+        padding: 20px;
+        text-align: center;
     }}
 
     .premio-visible {{
-        font-size: 22px;
+        font-size: 24px;
         font-weight: bold;
         color: #fff !important;
         text-shadow: 2px 2px 5px black;
+    }}
+
+    /* Efecto de brillo en el ganador */
+    @keyframes shine {{
+        0% {{ text-shadow: 0 0 10px #fff, 0 0 20px #ffd700, 0 0 30px #ff8c00; }}
+        50% {{ text-shadow: 0 0 20px #fff, 0 0 40px #ffd700, 0 0 60px #ff8c00; }}
+        100% {{ text-shadow: 0 0 10px #fff, 0 0 20px #ffd700, 0 0 30px #ff8c00; }}
+    }}
+    .shine {{
+        animation: shine 1.5s infinite alternate;
     }}
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
 
-
 # === Fondo ===
-image_url = "https://i.imgur.com/KkSUL4Z.jpg"
-set_background(image_url)
+set_background("https://i.imgur.com/KkSUL4Z.jpg")
 
 # === Logo ===
 logo_url = "https://i.imgur.com/wxJTNMK.png"
@@ -100,25 +75,15 @@ st.markdown(
     f"""
     <div style="text-align: center; margin-bottom: 30px;">
         <img src="{logo_url}" alt="Logo" style="width: 150px; margin: 20px auto;">
-        <hr style="border: 1px solid #ccc;">
+        <hr style="border: 1px solid #ccc; width: 60%;">
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-# === Título ===
-st.title("SORTEO Fiesta Fin de Año 🎁")
-
-# === Sección de carga ===
-st.markdown("### 📂 Cargar archivos para el sorteo")
-
-col_upload1, col_upload2 = st.columns(2)
-with col_upload1:
-    personas_file = st.file_uploader("Sube el archivo de personas (CSV)", type=["csv"])
-with col_upload2:
-    premios_file = st.file_uploader("Sube el archivo de premios (CSV)", type=["csv"])
-
-# === Estados ===
+# ==========================
+# ESTADOS
+# ==========================
 if "personas" not in st.session_state:
     st.session_state.personas = None
 if "premios" not in st.session_state:
@@ -132,97 +97,102 @@ if "ultimo_premio" not in st.session_state:
 if "premios_disponibles" not in st.session_state:
     st.session_state.premios_disponibles = None
 
+# ==========================
+# INTERFAZ PRINCIPAL
+# ==========================
+st.title("🎁 Sorteo Fiesta Fin de Año CN")
 
-# === Lógica principal ===
-if personas_file and premios_file:
-    try:
-        if st.session_state.personas is None:
+# Mostrar carga solo si aún no hay datos
+if st.session_state.personas is None or st.session_state.premios is None:
+    st.markdown("<h3 style='text-align:center;'>Cargá los archivos CSV para comenzar</h3>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        personas_file = st.file_uploader("📋 Archivo de Personas (CSV)", type=["csv"], key="personas_uploader")
+    with col2:
+        premios_file = st.file_uploader("🎁 Archivo de Premios (CSV)", type=["csv"], key="premios_uploader")
+
+    if personas_file and premios_file:
+        try:
             st.session_state.personas = pd.read_csv(personas_file)
-        if st.session_state.premios is None:
             st.session_state.premios = pd.read_csv(premios_file)
-
-        if st.session_state.premios_disponibles is None:
             st.session_state.premios_disponibles = st.session_state.premios["Nombre Premio"].tolist()
+            st.success("Archivos cargados correctamente. ¡Listo para comenzar el sorteo!")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error al leer los archivos: {e}")
 
-        col1, col2 = st.columns([1, 2])
+else:
+    # ==========================
+    # BLOQUE PRINCIPAL DE SORTEO
+    # ==========================
+    col1, col2 = st.columns([1, 2])
 
-        with col1:
-            st.subheader("El siguiente premio es")
+    with col1:
+        st.subheader("El siguiente premio es:")
+        if st.session_state.premios_disponibles:
+            premio_actual = st.session_state.premios_disponibles[0]
+            st.markdown(f"<div class='premio-visible'>{premio_actual}</div>", unsafe_allow_html=True)
+        else:
+            st.warning("No hay premios disponibles.")
 
-            if st.session_state.premios_disponibles:
-                premio_seleccionado = st.session_state.premios_disponibles[0]
-                st.markdown(f"<div class='premio-visible'>{premio_seleccionado}</div>", unsafe_allow_html=True)
-            else:
-                st.warning("No hay premios disponibles.")
+        if st.button("🎯 Sortear Premio", use_container_width=True):
+            if not st.session_state.personas.empty and st.session_state.premios_disponibles:
+                ganador = st.session_state.personas.sample(n=1)
+                ganador_id = ganador["ID"].values[0]
+                ganador_nombre = ganador["Nombre"].values[0]
+                premio = st.session_state.premios_disponibles[0]
 
-            if st.button("Sortear Premio"):
-                if not st.session_state.personas.empty and st.session_state.premios_disponibles:
-                    ganador = st.session_state.personas.sample(n=1)
-                    ganador_id = ganador["ID"].values[0]
-                    ganador_nombre = ganador["Nombre"].values[0]
-                    st.session_state.ultimo_ganador = ganador_nombre
-                    st.session_state.ultimo_premio = premio_seleccionado
+                st.session_state.ultimo_ganador = ganador_nombre
+                st.session_state.ultimo_premio = premio
 
-                    st.session_state.resultados.append(
-                        {"Ganador": ganador_nombre, "Premio": premio_seleccionado}
-                    )
-
-                    st.session_state.personas = st.session_state.personas[
-                        st.session_state.personas["ID"] != ganador_id
-                    ]
-
-                    st.session_state.premios_disponibles.pop(0)
-
-                    if not st.session_state.premios_disponibles:
-                        st.balloons()
-                        st.success(f"🎉 {ganador_nombre} ganó el premio: {premio_seleccionado}. ¡Sorteo finalizado!")
-                    else:
-                        st.success(f"🎉 {ganador_nombre} ganó el premio: {premio_seleccionado}")
-                else:
-                    st.warning("No hay más participantes o premios disponibles.")
-
-            if st.session_state.resultados:
-                st.subheader("Resultados del Sorteo")
-                resultados_df = pd.DataFrame(st.session_state.resultados)
-                st.dataframe(resultados_df, use_container_width=True)
-                st.download_button(
-                    label="Descargar Resultados",
-                    data=resultados_df.to_csv(index=False),
-                    file_name="resultados_sorteo.csv",
-                    mime="text/csv",
+                st.session_state.resultados.append(
+                    {"Ganador": ganador_nombre, "Premio": premio}
                 )
 
-        with col2:
+                st.session_state.personas = st.session_state.personas[
+                    st.session_state.personas["ID"] != ganador_id
+                ]
+                st.session_state.premios_disponibles.pop(0)
+
+                if not st.session_state.premios_disponibles:
+                    st.balloons()
+                    st.success("🎉 ¡Sorteo completado!")
+                st.rerun()
+            else:
+                st.warning("No hay más participantes o premios.")
+
+        if st.session_state.resultados:
+            st.subheader("📜 Resultados del sorteo")
+            resultados_df = pd.DataFrame(st.session_state.resultados)
+            st.dataframe(resultados_df, use_container_width=True)
+            st.download_button(
+                label="⬇️ Descargar Resultados",
+                data=resultados_df.to_csv(index=False),
+                file_name="resultados_sorteo.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+
+    with col2:
+        if st.session_state.ultimo_ganador:
             st.markdown(
-                """
-                <div style="text-align: center; margin-top: 50px; color: white; text-shadow: 2px 2px 5px black;">
-                    <h2 style="font-size: 50px;">EL GANADOR ES...</h2>
+                f"""
+                <div style="text-align:center; margin-top:50px;">
+                    <h2>EL GANADOR ES...</h2>
+                    <h1 class="shine" style="font-size:80px;">{st.session_state.ultimo_ganador}</h1>
+                    <h2 style="font-size:50px;">{st.session_state.ultimo_premio}</h2>
+                    <h3 style="font-size:40px; color:#f7e9b0;">¡FELICITACIONES! 🎉</h3>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-
-            if st.session_state.ultimo_ganador and st.session_state.ultimo_premio:
-                st.markdown(
-                    f"""
-                    <div style="text-align: center; margin-top: 20px; color: white; text-shadow: 2px 2px 5px black;">
-                        <h1 style="font-size: 70px;">{st.session_state.ultimo_ganador}</h1>
-                        <h2 style="font-size: 50px;">{st.session_state.ultimo_premio}</h2>
-                        <h3 style="font-size: 50px; margin-top: 20px; color: #ddd4c2;">¡Muchas Felicidades!</h3>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    """
-                    <div style="text-align: center; margin-top: 50px; color: gray;">
-                        <h1 style="font-size: 40px;">Aún no hay ganadores</h1>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-    except Exception as e:
-        st.error(f"Error al cargar los archivos CSV. Revisa las columnas ('ID', 'Nombre', 'Nombre Premio'). Detalle: {e}")
-        st.session_state.personas = None
-        st.session_state.premios = None
+        else:
+            st.markdown(
+                """
+                <div style="text-align:center; margin-top:80px;">
+                    <h2 style="color:gray;">Esperando el primer sorteo...</h2>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
