@@ -63,12 +63,16 @@ def set_background(image_url):
         border: 1px solid #ccc !important;
     }}
 
-    /* Subtítulos de carga */
+    /* Subtítulos de carga (oscuro, visible en deploy) */
     div[data-testid="stFileUploader"] {{
-        background-color: rgba(0, 0, 0, 0.6);
+        background-color: rgba(0, 0, 0, 0.7);
         border-radius: 10px;
         padding: 20px;
         text-align: center;
+        color: white !important;
+    }}
+    div[data-testid="stFileUploader"] label p {{
+        color: white !important;
     }}
 
     /* Premio */
@@ -104,21 +108,10 @@ def set_background(image_url):
         margin-bottom: 20px;
         color: white;
     }}
-
-    /* Cuenta regresiva (centrada y grande) */
-    .countdown {{
-        text-align: center;
-        margin-top: 30px;
-    }}
-    .countdown h1 {{
-        font-size: 120px;
-        color: #f7e9b0;
-        text-shadow: 3px 3px 8px black;
-        margin: 0;
-    }}
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
+
 
 # === Fondo ===
 set_background("https://i.imgur.com/dPJYAld.jpeg")
@@ -136,7 +129,7 @@ st.markdown(
 )
 
 # ==========================
-# ESTADOS (asegurar claves)
+# ESTADOS
 # ==========================
 if "personas" not in st.session_state:
     st.session_state.personas = None
@@ -156,7 +149,7 @@ if "premios_disponibles" not in st.session_state:
 # ==========================
 st.title("Sorteo Cocktail de Fin de Año")
 
-# si no están los datos, mostrar upload
+# === Si faltan archivos, mostrar uploaders ===
 if st.session_state.personas is None or st.session_state.premios is None:
     st.markdown("<h3 style='text-align:center;'>Cargá los archivos CSV para comenzar</h3>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
@@ -172,16 +165,13 @@ if st.session_state.personas is None or st.session_state.premios is None:
             st.session_state.premios = pd.read_csv(premios_file)
             st.session_state.premios_disponibles = st.session_state.premios["Nombre Premio"].tolist()
             st.success("Archivos cargados correctamente. ¡Listo para comenzar el sorteo!")
-            st.experimental_rerun()
+            st.rerun()
         except Exception as e:
             st.error(f"Error al leer los archivos: {e}")
 
+# === Si ya hay archivos cargados, mostrar sorteo ===
 else:
-    # columnas ajustadas: izquierda más angosta, derecha más ancha
     col1, col2 = st.columns([0.8, 2.2])
-
-    # Placeholder en la columna derecha para la cuenta y luego el ganador
-    placeholder_der = col2.empty()
 
     with col1:
         st.subheader("El siguiente premio es:")
@@ -191,38 +181,25 @@ else:
         else:
             st.warning("No hay premios disponibles.")
 
-        # el botón está DENTRO de col1 — así no ocupa todo el ancho de la página
+        # Botón solo visible cuando hay datos
         if st.button("Sortear Premio", use_container_width=True):
-            # seguridad
-            if st.session_state.personas is None or st.session_state.premios_disponibles is None:
-                st.warning("Cargá primero los archivos.")
-            elif st.session_state.personas.empty or not st.session_state.premios_disponibles:
-                st.warning("Fin del sorteo")
-            else:
-                # animación: 3,2,1 en la columna derecha
+            if not st.session_state.personas.empty and st.session_state.premios_disponibles:
+                placeholder = st.empty()
+
+                # === Animación cuenta regresiva ===
                 for i in [3, 2, 1]:
-                    placeholder_der.markdown(
+                    placeholder.markdown(
                         f"""
-                        <div class="countdown">
-                            <h1>{i}</h1>
+                        <div style="text-align:center; margin-top:50px;">
+                            <h1 style="font-size:120px; color:#f7e9b0; text-shadow:3px 3px 8px black;">{i}</h1>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
                     time.sleep(1)
+                placeholder.empty()
 
-                # pequeño destello final (puede verse rápido)
-                placeholder_der.markdown(
-                    """
-                    <div style="text-align:center; margin-top:10px;">
-                        <h1 style="font-size:80px; color:white; text-shadow:0 0 30px #fff;">¡Ya!</h1>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                time.sleep(0.3)
-
-                # seleccionar ganador y actualizar estado ANTES de rerun
+                # === Selección del ganador ===
                 ganador = st.session_state.personas.sample(n=1)
                 ganador_id = ganador["ID"].values[0]
                 ganador_nombre = ganador["Nombre"].values[0]
@@ -237,10 +214,14 @@ else:
                 ]
                 st.session_state.premios_disponibles.pop(0)
 
-                # rerun para mostrar el ganador usando la plantilla normal de la derecha
-                st.experimental_rerun()
+                if not st.session_state.premios_disponibles:
+                    st.balloons()
+                    st.success("¡Sorteo completado!")
 
-        # resultados y descarga (siguen en la columna izquierda)
+                st.rerun()
+            else:
+                st.warning("Fin del sorteo")
+
         if st.session_state.resultados:
             st.subheader("Resultados del sorteo")
             resultados_df = pd.DataFrame(st.session_state.resultados)
@@ -253,14 +234,14 @@ else:
                 use_container_width=True,
             )
 
-    # Columna derecha: aquí se muestra el ganador (si existe)
+    # Columna derecha: Ganador
     with col2:
         if st.session_state.ultimo_ganador:
             st.markdown(
                 f"""
                 <div style="text-align:center; margin-top:30px;">
                     <h2 class="ganador-titulo">El ganador es...</h2>
-                    <div class="ganador-nombre shine">{st.session_state.ultimo_ganador}</div>
+                    <div class="ganador-nombre">{st.session_state.ultimo_ganador}</div>
                     <div class="ganador-premio">{st.session_state.ultimo_premio}</div>
                     <h3 style="font-size:40px; color:#f7e9b0;">¡Felicitaciones!</h3>
                 </div>
@@ -268,8 +249,7 @@ else:
                 unsafe_allow_html=True,
             )
         else:
-            # si no hay ganador todavía, mostramos el placeholder vacío (ya creado)
-            placeholder_der.markdown(
+            st.markdown(
                 """
                 <div style="text-align:center; margin-top:100px;">
                     <h2 style="color:gray;">Esperando el primer sorteo...</h2>
