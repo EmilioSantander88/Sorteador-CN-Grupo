@@ -163,7 +163,6 @@ if st.session_state.personas is None or st.session_state.premios is None:
             st.error(f"Error al leer los archivos: {e}")
 
 else:
-    # columnas ajustadas
     col1, col2 = st.columns([0.8, 2.2])
 
     with col1:
@@ -176,13 +175,13 @@ else:
 
         if st.button("Sortear Premio", use_container_width=True):
             if not st.session_state.personas.empty and st.session_state.premios_disponibles:
-                # ocultar ganador anterior
+                # ocultar ganador anterior durante el conteo
                 st.session_state.ultimo_ganador = None
                 st.session_state.ultimo_premio = None
 
                 placeholder_derecha = col2.empty()
 
-                # === Animación 3, 2, 1 (columna derecha) ===
+                # === Animación 3, 2, 1 en columna derecha ===
                 for i in [3, 2, 1]:
                     placeholder_derecha.markdown(
                         f"""
@@ -219,6 +218,19 @@ else:
             else:
                 st.warning("Fin del sorteo")
 
+        # === Lista de ganadores dentro de la columna izquierda ===
+        if st.session_state.resultados:
+            st.subheader("Resultados del sorteo")
+            resultados_df = pd.DataFrame(st.session_state.resultados)
+            st.dataframe(resultados_df, use_container_width=True)
+            st.download_button(
+                label="Descargar Resultados",
+                data=resultados_df.to_csv(index=False),
+                file_name="resultados_sorteo.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+
     with col2:
         if st.session_state.ultimo_ganador:
             st.markdown(
@@ -241,15 +253,3 @@ else:
                 """,
                 unsafe_allow_html=True,
             )
-
-    if st.session_state.resultados:
-        st.subheader("Resultados del sorteo")
-        resultados_df = pd.DataFrame(st.session_state.resultados)
-        st.dataframe(resultados_df, use_container_width=True)
-        st.download_button(
-            label="Descargar Resultados",
-            data=resultados_df.to_csv(index=False),
-            file_name="resultados_sorteo.csv",
-            mime="text/csv",
-            use_container_width=True,
-        )
