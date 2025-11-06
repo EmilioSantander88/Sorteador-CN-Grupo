@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import time
 
 # ==========================
 # CONFIGURACIÓN INICIAL
@@ -110,7 +111,7 @@ def set_background(image_url):
     st.markdown(css, unsafe_allow_html=True)
 
 # === Fondo ===
-set_background("https://i.imgur.com/KkSUL4Z.jpg")
+set_background("https://i.imgur.com/dPJYAld.jpeg")
 
 # === Logo ===
 logo_url = "https://i.imgur.com/wxJTNMK.png"
@@ -143,7 +144,7 @@ if "premios_disponibles" not in st.session_state:
 # ==========================
 # INTERFAZ PRINCIPAL
 # ==========================
-st.title("🎁 Sorteo Fiesta Fin de Año CN")
+st.title("Sorteo Cocktail de Fin de Año")
 
 if st.session_state.personas is None or st.session_state.premios is None:
     st.markdown("<h3 style='text-align:center;'>Cargá los archivos CSV para comenzar</h3>", unsafe_allow_html=True)
@@ -176,28 +177,48 @@ else:
         else:
             st.warning("No hay premios disponibles.")
 
-        if st.button("Sortear Premio", use_container_width=True):
-            if not st.session_state.personas.empty and st.session_state.premios_disponibles:
-                ganador = st.session_state.personas.sample(n=1)
-                ganador_id = ganador["ID"].values[0]
-                ganador_nombre = ganador["Nombre"].values[0]
-                premio = st.session_state.premios_disponibles[0]
+import time
 
-                st.session_state.ultimo_ganador = ganador_nombre
-                st.session_state.ultimo_premio = premio
+if st.button("Sortear Premio", use_container_width=True):
+    if not st.session_state.personas.empty and st.session_state.premios_disponibles:
+        placeholder = st.empty()
 
-                st.session_state.resultados.append({"Ganador": ganador_nombre, "Premio": premio})
-                st.session_state.personas = st.session_state.personas[
-                    st.session_state.personas["ID"] != ganador_id
-                ]
-                st.session_state.premios_disponibles.pop(0)
+        # === Animación de cuenta regresiva ===
+        for i in [3, 2, 1]:
+            placeholder.markdown(
+                f"""
+                <div style="text-align:center; margin-top:50px;">
+                    <h1 style="font-size:120px; color:#f7e9b0; text-shadow:3px 3px 8px black;">{i}</h1>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            time.sleep(1)
+        placeholder.empty()
 
-                if not st.session_state.premios_disponibles:
-                    st.balloons()
-                    st.success("🎉 ¡Sorteo completado!")
-                st.rerun()
-            else:
-                st.warning("No hay más participantes o premios.")
+        # === Selección del ganador ===
+        ganador = st.session_state.personas.sample(n=1)
+        ganador_id = ganador["ID"].values[0]
+        ganador_nombre = ganador["Nombre"].values[0]
+        premio = st.session_state.premios_disponibles[0]
+
+        st.session_state.ultimo_ganador = ganador_nombre
+        st.session_state.ultimo_premio = premio
+
+        st.session_state.resultados.append({"Ganador": ganador_nombre, "Premio": premio})
+        st.session_state.personas = st.session_state.personas[
+            st.session_state.personas["ID"] != ganador_id
+        ]
+        st.session_state.premios_disponibles.pop(0)
+
+        if not st.session_state.premios_disponibles:
+            st.balloons()
+            st.success("¡Sorteo completado!")
+
+        st.rerun()
+    else:
+        st.warning("Fin del sorteo")
+
 
         if st.session_state.resultados:
             st.subheader("Resultados del sorteo")
@@ -216,10 +237,10 @@ else:
             st.markdown(
                 f"""
                 <div style="text-align:center; margin-top:30px;">
-                    <h2 class="ganador-titulo">EL GANADOR ES...</h2>
+                    <h2 class="ganador-titulo">El ganador es...</h2>
                     <div class="ganador-nombre shine">{st.session_state.ultimo_ganador}</div>
                     <div class="ganador-premio">{st.session_state.ultimo_premio}</div>
-                    <h3 style="font-size:40px; color:#f7e9b0;">¡FELICITACIONES! 🎉</h3>
+                    <h3 style="font-size:40px; color:#f7e9b0;">¡Felicitaciones!</h3>
                 </div>
                 """,
                 unsafe_allow_html=True,
