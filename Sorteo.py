@@ -79,11 +79,11 @@ def set_background(image_url):
         text-shadow: 2px 2px 5px black;
     }}
 
-    /* Línea divisoria */
+    /* LÍNEA DIVISORIA: MARGEN SUPERIOR A 40px */
     .custom-line {{
         border-top: 1px solid #ccc;
         width: 100%;
-        margin: 10px 0 40px 0;
+        margin: 40px 0 40px 0; /* Aplicará 40px de espacio arriba y abajo */
     }}
 
     /* Texto grande lado derecho */
@@ -108,31 +108,21 @@ def set_background(image_url):
     """
     st.markdown(css, unsafe_allow_html=True)
 
-# === Fondo (URL de GitHub) ===
+# === Fondo ===
 set_background("https://raw.githubusercontent.com/EmilioSantander88/Sorteador-CN-Grupo/main/Fondo%20Sorteo%20Grande.png")
 
-# === Logo ===
+# === Logo (CN-GRUPO) ===
 logo_url = "https://i.imgur.com/wxJTNMK.png"
+st.markdown(
+    f"""
+    <div style="text-align: left; margin-bottom: 15px;"> 
+        <img src="{logo_url}" alt="Logo" style="width: 150px; margin: 20px 0 0 0; display: block;">
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-# ==========================
-# ESTRUCTURA SUPERIOR (LOGO Y LÍNEA)
-# ==========================
-
-# Usamos las mismas columnas para posicionar el logo en el espacio de la derecha.
-col_logo_izq, col_logo_der = st.columns([0.8, 2.2])
-
-with col_logo_der:
-    # 1. El logo ahora se centra dentro de la columna derecha
-    st.markdown(
-        f"""
-        <div style="text-align: center; margin-bottom: 10px;">
-            <img src="{logo_url}" alt="Logo" style="width: 150px; margin: 20px auto 0 auto;">
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-# 2. La línea separadora se coloca fuera de las columnas, asegurando el ancho completo
+# === Línea Divisoria Separada ===
 st.markdown('<div class="custom-line"></div>', unsafe_allow_html=True)
 
 
@@ -155,13 +145,9 @@ if "premios_disponibles" not in st.session_state:
 # ==========================
 # INTERFAZ PRINCIPAL
 # ==========================
-
 st.title("Sorteo Fin de Año")
 
 if st.session_state.personas is None or st.session_state.premios is None:
-    # -----------------------------------
-    # ESTADO DE CARGA DE ARCHIVOS
-    # -----------------------------------
     st.markdown("<h3 style='text-align:center;'>Cargá los archivos CSV para comenzar</h3>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
 
@@ -181,13 +167,7 @@ if st.session_state.personas is None or st.session_state.premios is None:
             st.error(f"Error al leer los archivos: {e}")
 
 else:
-    # -----------------------------------
-    # ESTADO DE SORTEO ACTIVO
-    # -----------------------------------
     col1, col2 = st.columns([0.8, 2.2])
-
-    # El logo ya está renderizado arriba, no hace falta ponerlo de nuevo aquí.
-    # Solo el contenido de sorteo:
 
     with col1:
         st.subheader("El siguiente premio es:")
@@ -203,7 +183,6 @@ else:
                 st.session_state.ultimo_ganador = None
                 st.session_state.ultimo_premio = None
 
-                # Usamos una columna placeholder temporal para el contador
                 placeholder_derecha = col2.empty()
 
                 # === Animación 3, 2, 1 en columna derecha ===
