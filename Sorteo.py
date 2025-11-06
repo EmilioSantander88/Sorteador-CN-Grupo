@@ -52,7 +52,6 @@ def set_background(image_url):
     button[kind="primary"]:hover, div.stButton > button:hover {{
         background-color: #f7e9b0 !important;
         color: black !important;
-        border: 2px solid #f7e9b0 !important;
         transform: scale(1.03);
     }}
 
@@ -63,16 +62,13 @@ def set_background(image_url):
         border: 1px solid #ccc !important;
     }}
 
-    /* Subtítulos de carga (oscuro, visible en deploy) */
+    /* Subtítulos de carga */
     div[data-testid="stFileUploader"] {{
-        background-color: rgba(0, 0, 0, 0.7);
+        background-color: rgba(255, 255, 255, 0.9);
         border-radius: 10px;
         padding: 20px;
         text-align: center;
-        color: white !important;
-    }}
-    div[data-testid="stFileUploader"] label p {{
-        color: white !important;
+        color: black !important;
     }}
 
     /* Premio */
@@ -83,7 +79,6 @@ def set_background(image_url):
         text-shadow: 2px 2px 5px black;
     }}
 
-    /* Línea decorativa bajo el logo */
     .custom-line {{
         border-top: 1px solid #ccc;
         width: 100%;
@@ -111,7 +106,6 @@ def set_background(image_url):
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
-
 
 # === Fondo ===
 set_background("https://i.imgur.com/dPJYAld.jpeg")
@@ -149,7 +143,6 @@ if "premios_disponibles" not in st.session_state:
 # ==========================
 st.title("Sorteo Cocktail de Fin de Año")
 
-# === Si faltan archivos, mostrar uploaders ===
 if st.session_state.personas is None or st.session_state.premios is None:
     st.markdown("<h3 style='text-align:center;'>Cargá los archivos CSV para comenzar</h3>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
@@ -169,8 +162,8 @@ if st.session_state.personas is None or st.session_state.premios is None:
         except Exception as e:
             st.error(f"Error al leer los archivos: {e}")
 
-# === Si ya hay archivos cargados, mostrar sorteo ===
 else:
+    # columnas ajustadas
     col1, col2 = st.columns([0.8, 2.2])
 
     with col1:
@@ -181,14 +174,17 @@ else:
         else:
             st.warning("No hay premios disponibles.")
 
-        # Botón solo visible cuando hay datos
         if st.button("Sortear Premio", use_container_width=True):
             if not st.session_state.personas.empty and st.session_state.premios_disponibles:
-                placeholder = st.empty()
+                # ocultar ganador anterior
+                st.session_state.ultimo_ganador = None
+                st.session_state.ultimo_premio = None
 
-                # === Animación cuenta regresiva ===
+                placeholder_derecha = col2.empty()
+
+                # === Animación 3, 2, 1 (columna derecha) ===
                 for i in [3, 2, 1]:
-                    placeholder.markdown(
+                    placeholder_derecha.markdown(
                         f"""
                         <div style="text-align:center; margin-top:50px;">
                             <h1 style="font-size:120px; color:#f7e9b0; text-shadow:3px 3px 8px black;">{i}</h1>
@@ -197,7 +193,8 @@ else:
                         unsafe_allow_html=True,
                     )
                     time.sleep(1)
-                placeholder.empty()
+
+                placeholder_derecha.empty()
 
                 # === Selección del ganador ===
                 ganador = st.session_state.personas.sample(n=1)
@@ -222,19 +219,6 @@ else:
             else:
                 st.warning("Fin del sorteo")
 
-        if st.session_state.resultados:
-            st.subheader("Resultados del sorteo")
-            resultados_df = pd.DataFrame(st.session_state.resultados)
-            st.dataframe(resultados_df, use_container_width=True)
-            st.download_button(
-                label="Descargar Resultados",
-                data=resultados_df.to_csv(index=False),
-                file_name="resultados_sorteo.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
-
-    # Columna derecha: Ganador
     with col2:
         if st.session_state.ultimo_ganador:
             st.markdown(
@@ -257,3 +241,15 @@ else:
                 """,
                 unsafe_allow_html=True,
             )
+
+    if st.session_state.resultados:
+        st.subheader("Resultados del sorteo")
+        resultados_df = pd.DataFrame(st.session_state.resultados)
+        st.dataframe(resultados_df, use_container_width=True)
+        st.download_button(
+            label="Descargar Resultados",
+            data=resultados_df.to_csv(index=False),
+            file_name="resultados_sorteo.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
