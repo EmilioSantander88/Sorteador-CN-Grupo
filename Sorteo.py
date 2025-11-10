@@ -79,11 +79,11 @@ def set_background(image_url):
         text-shadow: 2px 2px 5px black;
     }}
 
-    /* LÍNEA DIVISORIA: MARGEN SUPERIOR A 40px */
+    /* LÍNEA DIVISORIA */
     .custom-line {{
         border-top: 1px solid #ccc;
         width: 100%;
-        margin: 40px 0 40px 0; /* Aplicará 40px de espacio arriba y abajo */
+        margin: 40px 0 40px 0;
     }}
 
     /* Texto grande lado derecho */
@@ -122,25 +122,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# === Línea Divisoria Separada ===
+# === Línea Divisoria ===
 st.markdown('<div class="custom-line"></div>', unsafe_allow_html=True)
-
 
 # ==========================
 # ESTADOS
 # ==========================
-if "personas" not in st.session_state:
-    st.session_state.personas = None
-if "premios" not in st.session_state:
-    st.session_state.premios = None
-if "resultados" not in st.session_state:
-    st.session_state.resultados = []
-if "ultimo_ganador" not in st.session_state:
-    st.session_state.ultimo_ganador = None
-if "ultimo_premio" not in st.session_state:
-    st.session_state.ultimo_premio = None
-if "premios_disponibles" not in st.session_state:
-    st.session_state.premios_disponibles = None
+for key in ["personas", "premios", "resultados", "ultimo_ganador", "ultimo_premio", "premios_disponibles"]:
+    if key not in st.session_state:
+        st.session_state[key] = [] if key == "resultados" else None
 
 # ==========================
 # INTERFAZ PRINCIPAL
@@ -148,21 +138,55 @@ if "premios_disponibles" not in st.session_state:
 st.title("Sorteo Fin de Año")
 
 if st.session_state.personas is None or st.session_state.premios is None:
-    st.markdown("<h3 style='text-align:center;'>Cargá los archivos CSV para comenzar</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align:center;'>Cargá los archivos Excel y CSV para comenzar</h3>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
 
     with col1:
-        personas_file = st.file_uploader("📋 Archivo de Personas (CSV)", type=["csv"], key="personas_uploader")
+        personas_file = st.file_uploader("📋 Archivo de Personas (Excel o CSV)", type=["csv", "xlsx", "xls"], key="personas_uploader")
     with col2:
         premios_file = st.file_uploader("🎁 Archivo de Premios (CSV)", type=["csv"], key="premios_uploader")
 
     if personas_file and premios_file:
         try:
-            st.session_state.personas = pd.read_csv(personas_file)
-            st.session_state.premios = pd.read_csv(premios_file)
-            st.session_state.premios_disponibles = st.session_state.premios["Nombre Premio"].tolist()
-            st.success("Archivos cargados correctamente. ¡Listo para comenzar el sorteo!")
-            st.rerun()
+            # === Carga del archivo de personas ===
+            if personas_file.name.endswith((".xls", ".xlsx")):
+                personas_df = pd.read_excel(personas_file, sheet_name=0)
+            else:
+                personas_df = pd.read_csv(personas_file)
+
+            # Validación de columnas esperadas
+            if "Nombre y Apellido" not in personas_df.columns or "N° DNI" not in personas_df.columns:
+                st.error("El archivo de personas debe contener las columnas 'Nombre y Apellido' y 'N° DNI'.")
+            else:
+                # Limpieza de valores nulos
+                personas_df = personas_df.dropna(subset=["Nombre y Apellido"])
+                
+                # MEJORA: Eliminar la columna 'ID' original del archivo si existe 
+                if 'ID' in personas_df.columns:
+                    personas_df = personas_df.drop(columns=['ID'])
+                
+                # *** CORRECCIÓN CRÍTICA PARA ELIMINAR EL [nan 'nombre'] ***
+                # Eliminar la columna 'Nombre' original que tiene NaNs y entra en conflicto 
+                # con el nuevo nombre que se asignará a 'Nombre y Apellido'.
+                if 'Nombre' in personas_df.columns and 'Nombre y Apellido' in personas_df.columns:
+                    personas_df = personas_df.drop(columns=['Nombre'])
+                
+                # Eliminar duplicados de DNI y RESTABLECER EL ÍNDICE
+                personas_df = personas_df.drop_duplicates(subset=["N° DNI"], keep="first").reset_index(drop=True)
+
+                # Renombrar para compatibilidad con el resto del código
+                personas_df = personas_df.rename(columns={"Nombre y Apellido": "Nombre", "N° DNI": "ID"})
+
+                # Carga del archivo de premios
+                premios_df = pd.read_csv(premios_file)
+
+                st.session_state.personas = personas_df
+                st.session_state.premios = premios_df
+                st.session_state.premios_disponibles = premios_df["Nombre Premio"].tolist()
+
+                st.success(f"Archivos cargados correctamente. Se registraron {len(personas_df)} personas únicas.")
+                st.rerun()
+
         except Exception as e:
             st.error(f"Error al leer los archivos: {e}")
 
@@ -178,14 +202,18 @@ else:
             st.warning("No hay premios disponibles.")
 
         if st.button("Sortear Premio", use_container_width=True):
-            if not st.session_state.personas.empty and st.session_state.premios_disponibles:
-                # ocultar ganador anterior durante el conteo
+            if (
+                st.session_state.personas is not None
+                and not st.session_state.personas.empty
+                and st.session_state.premios_disponibles
+            ):
+                # Ocultar ganador anterior
                 st.session_state.ultimo_ganador = None
                 st.session_state.ultimo_premio = None
 
                 placeholder_derecha = col2.empty()
 
-                # === Animación 3, 2, 1 en columna derecha ===
+                # Animación 3, 2, 1
                 for i in [3, 2, 1]:
                     placeholder_derecha.markdown(
                         f"""
@@ -199,19 +227,25 @@ else:
 
                 placeholder_derecha.empty()
 
-                # === Selección del ganador ===
+                # Selección del ganador
                 ganador = st.session_state.personas.sample(n=1)
                 ganador_id = ganador["ID"].values[0]
+                
+                # Extracción simple: ya que eliminamos la columna conflictiva, solo devuelve el string del nombre
                 ganador_nombre = ganador["Nombre"].values[0]
+                
                 premio = st.session_state.premios_disponibles[0]
 
                 st.session_state.ultimo_ganador = ganador_nombre
                 st.session_state.ultimo_premio = premio
 
                 st.session_state.resultados.append({"Ganador": ganador_nombre, "Premio": premio})
+                
+                # Filtrado del DataFrame 
                 st.session_state.personas = st.session_state.personas[
                     st.session_state.personas["ID"] != ganador_id
                 ]
+                
                 st.session_state.premios_disponibles.pop(0)
 
                 if not st.session_state.premios_disponibles:
@@ -220,9 +254,9 @@ else:
 
                 st.rerun()
             else:
-                st.warning("Fin del sorteo")
+                st.warning("Fin del sorteo o no hay participantes disponibles.")
 
-        # === Lista de ganadores dentro de la columna izquierda ===
+        # === Lista de ganadores ===
         if st.session_state.resultados:
             st.subheader("Resultados del sorteo")
             resultados_df = pd.DataFrame(st.session_state.resultados)
@@ -236,7 +270,8 @@ else:
             )
 
     with col2:
-        if st.session_state.ultimo_ganador:
+        # La condición vuelve a ser simple y funcional, ya que ahora 'ultimo_ganador' es un string limpio
+        if st.session_state.ultimo_ganador: 
             st.markdown(
                 f"""
                 <div style="text-align:center; margin-top:30px;">
