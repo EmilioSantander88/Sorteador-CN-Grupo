@@ -155,7 +155,7 @@ if st.session_state.personas is None or st.session_state.premios is None:
                 personas_df = pd.read_csv(personas_file)
 
             # Validación de columnas esperadas
-            if "Nombre y Apellido" not in personas_df.columns or "N° DNI" not in personas_df.columns:
+            if "Nombre y Apellido" not in personas_df.columns or "N° DNI (Sin puntos, espacios ni comas)" not in personas_df.columns:
                 st.error("El archivo de personas debe contener las columnas 'Nombre y Apellido' y 'N° DNI'.")
             else:
                 # Limpieza de valores nulos
@@ -172,10 +172,10 @@ if st.session_state.personas is None or st.session_state.premios is None:
                     personas_df = personas_df.drop(columns=['Nombre'])
                 
                 # Eliminar duplicados de DNI y RESTABLECER EL ÍNDICE
-                personas_df = personas_df.drop_duplicates(subset=["N° DNI"], keep="first").reset_index(drop=True)
+                personas_df = personas_df.drop_duplicates(subset=["N° DNI (Sin puntos, espacios ni comas)"], keep="first").reset_index(drop=True)
 
                 # Renombrar para compatibilidad con el resto del código
-                personas_df = personas_df.rename(columns={"Nombre y Apellido": "Nombre", "N° DNI": "ID"})
+                personas_df = personas_df.rename(columns={"Nombre y Apellido": "Nombre", "N° DNI (Sin puntos, espacios ni comas)": "ID"})
 
                 # Carga del archivo de premios
                 premios_df = pd.read_csv(premios_file)
