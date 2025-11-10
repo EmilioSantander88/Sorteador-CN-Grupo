@@ -156,7 +156,7 @@ if st.session_state.personas is None or st.session_state.premios is None:
 
             # Validación de columnas esperadas
             if "Nombre y Apellido" not in personas_df.columns or "N° DNI (Sin puntos, espacios ni comas)" not in personas_df.columns:
-                st.error("El archivo de personas debe contener las columnas 'Nombre y Apellido' y 'N° DNI'.")
+                st.error("El archivo de personas debe contener las columnas 'Nombre y Apellido' y 'N° DNI (Sin puntos, espacios ni comas)'.")
             else:
                 # Limpieza de valores nulos
                 personas_df = personas_df.dropna(subset=["Nombre y Apellido"])
