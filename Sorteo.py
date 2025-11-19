@@ -7,17 +7,32 @@ import time
 # ==========================
 st.set_page_config(layout="wide", page_title="Sorteador CN")
 
+# === Opciones de fondos ===
+FONDOS = {
+    "Azul Marino (Default)": "GRADIENT",  # Fondo CSS
+    "Cocktail Fin de Año": "https://raw.githubusercontent.com/EmilioSantander88/Sorteador-CN-Grupo/main/Fondo%20Sorteo%20Grande.png"
+}
+
 # === Fondo y estilo ===
 def set_background(image_url):
+    if image_url == "GRADIENT":
+        css_background = """
+        background: linear-gradient(135deg, #0a1a33 0%, #0f2547 50%, #091528 100%) !important;
+        """
+    else:
+        css_background = f"""
+        background-image: url("{image_url}");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        """
+
     css = f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DIN&display=swap');
 
     .stApp {{
-        background-image: url("{image_url}");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
+        {css_background}
         font-family: 'DIN', sans-serif;
     }}
 
@@ -62,15 +77,6 @@ def set_background(image_url):
         border: 1px solid #ccc !important;
     }}
 
-    /* Subtítulos de carga */
-    div[data-testid="stFileUploader"] {{
-        background-color: rgba(255, 255, 255, 0.9);
-        border-radius: 10px;
-        padding: 20px;
-        text-align: center;
-        color: black !important;
-    }}
-
     /* Premio */
     .premio-visible {{
         font-size: 26px;
@@ -79,14 +85,14 @@ def set_background(image_url):
         text-shadow: 2px 2px 5px black;
     }}
 
-    /* LÍNEA DIVISORIA */
+    /* Línea divisoria */
     .custom-line {{
         border-top: 1px solid #ccc;
         width: 100%;
         margin: 40px 0 40px 0;
     }}
 
-    /* Texto grande lado derecho */
+    /* Texto ganador */
     .ganador-nombre {{
         font-size: 100px;
         font-weight: bold;
@@ -108,8 +114,31 @@ def set_background(image_url):
     """
     st.markdown(css, unsafe_allow_html=True)
 
-# === Fondo ===
-set_background("https://raw.githubusercontent.com/EmilioSantander88/Sorteador-CN-Grupo/main/Fondo%20Sorteo%20Grande.png")
+
+# ======================================
+# SELECTOR DE FONDO SOLO EN LA PANTALLA INICIAL
+# ======================================
+
+mostrar_selector = (
+    st.session_state.get("personas") is None or 
+    st.session_state.get("premios") is None
+)
+
+if mostrar_selector:
+    fondo_seleccionado = st.selectbox(
+        "Elegí la temática del fondo",
+        list(FONDOS.keys())
+    )
+else:
+    # Por coherencia: si ya está cargado, usar el último seleccionado,
+    # y si no existe, usar el default.
+    fondo_seleccionado = st.session_state.get("fondo_actual", "Azul Marino (Default)")
+
+# Guardar selección
+st.session_state["fondo_actual"] = fondo_seleccionado
+
+# Aplicar fondo
+set_background(FONDOS[fondo_seleccionado])
 
 # === Logo (CN-GRUPO) ===
 logo_url = "https://i.imgur.com/wxJTNMK.png"
@@ -135,7 +164,7 @@ for key in ["personas", "premios", "resultados", "ultimo_ganador", "ultimo_premi
 # ==========================
 # INTERFAZ PRINCIPAL
 # ==========================
-st.title("Sorteo Fin de Año")
+st.title("Sorteo CN Grupo")
 
 if st.session_state.personas is None or st.session_state.premios is None:
     st.markdown("<h3 style='text-align:center;'>Cargá los archivos Excel y CSV para comenzar</h3>", unsafe_allow_html=True)
@@ -148,36 +177,31 @@ if st.session_state.personas is None or st.session_state.premios is None:
 
     if personas_file and premios_file:
         try:
-            # === Carga del archivo de personas ===
+            # Carga personas
             if personas_file.name.endswith((".xls", ".xlsx")):
                 personas_df = pd.read_excel(personas_file, sheet_name=0)
             else:
                 personas_df = pd.read_csv(personas_file)
 
-            # Validación de columnas esperadas
             if "Nombre y Apellido" not in personas_df.columns or "N° DNI (Sin puntos, espacios ni comas)" not in personas_df.columns:
                 st.error("El archivo de personas debe contener las columnas 'Nombre y Apellido' y 'N° DNI (Sin puntos, espacios ni comas)'.")
             else:
-                # Limpieza de valores nulos
                 personas_df = personas_df.dropna(subset=["Nombre y Apellido"])
-                
-                # MEJORA: Eliminar la columna 'ID' original del archivo si existe 
+
                 if 'ID' in personas_df.columns:
                     personas_df = personas_df.drop(columns=['ID'])
-                
-                # *** CORRECCIÓN CRÍTICA PARA ELIMINAR EL [nan 'nombre'] ***
-                # Eliminar la columna 'Nombre' original que tiene NaNs y entra en conflicto 
-                # con el nuevo nombre que se asignará a 'Nombre y Apellido'.
-                if 'Nombre' in personas_df.columns and 'Nombre y Apellido' in personas_df.columns:
+                if 'Nombre' in personas_df.columns:
                     personas_df = personas_df.drop(columns=['Nombre'])
-                
-                # Eliminar duplicados de DNI y RESTABLECER EL ÍNDICE
-                personas_df = personas_df.drop_duplicates(subset=["N° DNI (Sin puntos, espacios ni comas)"], keep="first").reset_index(drop=True)
 
-                # Renombrar para compatibilidad con el resto del código
-                personas_df = personas_df.rename(columns={"Nombre y Apellido": "Nombre", "N° DNI (Sin puntos, espacios ni comas)": "ID"})
+                personas_df = personas_df.drop_duplicates(
+                    subset=["N° DNI (Sin puntos, espacios ni comas)"], keep="first"
+                ).reset_index(drop=True)
 
-                # Carga del archivo de premios
+                personas_df = personas_df.rename(columns={
+                    "Nombre y Apellido": "Nombre",
+                    "N° DNI (Sin puntos, espacios ni comas)": "ID"
+                })
+
                 premios_df = pd.read_csv(premios_file)
 
                 st.session_state.personas = personas_df
@@ -207,13 +231,11 @@ else:
                 and not st.session_state.personas.empty
                 and st.session_state.premios_disponibles
             ):
-                # Ocultar ganador anterior
                 st.session_state.ultimo_ganador = None
                 st.session_state.ultimo_premio = None
 
                 placeholder_derecha = col2.empty()
 
-                # Animación 3, 2, 1
                 for i in [3, 2, 1]:
                     placeholder_derecha.markdown(
                         f"""
@@ -227,25 +249,20 @@ else:
 
                 placeholder_derecha.empty()
 
-                # Selección del ganador
                 ganador = st.session_state.personas.sample(n=1)
                 ganador_id = ganador["ID"].values[0]
-                
-                # Extracción simple: ya que eliminamos la columna conflictiva, solo devuelve el string del nombre
                 ganador_nombre = ganador["Nombre"].values[0]
-                
+
                 premio = st.session_state.premios_disponibles[0]
 
                 st.session_state.ultimo_ganador = ganador_nombre
                 st.session_state.ultimo_premio = premio
 
                 st.session_state.resultados.append({"Ganador": ganador_nombre, "Premio": premio})
-                
-                # Filtrado del DataFrame 
+
                 st.session_state.personas = st.session_state.personas[
                     st.session_state.personas["ID"] != ganador_id
                 ]
-                
                 st.session_state.premios_disponibles.pop(0)
 
                 if not st.session_state.premios_disponibles:
@@ -256,7 +273,6 @@ else:
             else:
                 st.warning("Fin del sorteo o no hay participantes disponibles.")
 
-        # === Lista de ganadores ===
         if st.session_state.resultados:
             st.subheader("Resultados del sorteo")
             resultados_df = pd.DataFrame(st.session_state.resultados)
@@ -270,8 +286,7 @@ else:
             )
 
     with col2:
-        # La condición vuelve a ser simple y funcional, ya que ahora 'ultimo_ganador' es un string limpio
-        if st.session_state.ultimo_ganador: 
+        if st.session_state.ultimo_ganador:
             st.markdown(
                 f"""
                 <div style="text-align:center; margin-top:30px;">
