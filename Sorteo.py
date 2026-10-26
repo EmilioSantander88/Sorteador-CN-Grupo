@@ -11,6 +11,7 @@ st.set_page_config(layout="wide", page_title="Sorteador CN")
 FONDOS = {
     "Azul Marino (Default)": "GRADIENT",  # Fondo CSS
     "Cocktail Fin de Año": "https://i.imgur.com/Od3LWx7.jpeg"
+    "Clientes": "https://i.imgur.com/7TxcQnm.jpeg"
 }
 
 # === Fondo y estilo ===
