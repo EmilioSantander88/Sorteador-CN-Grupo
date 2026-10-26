@@ -141,7 +141,7 @@ st.session_state["fondo_actual"] = fondo_seleccionado
 set_background(FONDOS[fondo_seleccionado])
 
 # === Logo (CN-GRUPO) ===
-logo_url = "https://i.imgur.com/wxJTNMK.png"
+logo_url = "https://i.imgur.com/Od3LWx7.jpeg"
 st.markdown(
     f"""
     <div style="text-align: left; margin-bottom: 15px;"> 
