@@ -10,7 +10,7 @@ st.set_page_config(layout="wide", page_title="Sorteador CN")
 # === Opciones de fondos ===
 FONDOS = {
     "Azul Marino (Default)": "GRADIENT",  # Fondo CSS
-    "Cocktail Fin de Año": "https://raw.githubusercontent.com/EmilioSantander88/Sorteador-CN-Grupo/main/Fondo%20Sorteo%20Grande.png"
+    "Cocktail Fin de Año": "https://i.imgur.com/Od3LWx7.jpeg"
 }
 
 # === Fondo y estilo ===
@@ -141,7 +141,7 @@ st.session_state["fondo_actual"] = fondo_seleccionado
 set_background(FONDOS[fondo_seleccionado])
 
 # === Logo (CN-GRUPO) ===
-logo_url = "https://i.imgur.com/Od3LWx7.jpeg"
+logo_url = "https://i.imgur.com/wxJTNMK.png"
 st.markdown(
     f"""
     <div style="text-align: left; margin-bottom: 15px;"> 
